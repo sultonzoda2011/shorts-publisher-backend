@@ -1,15 +1,17 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { google } from 'googleapis';
 
 @Injectable()
 export class AuthService {
-  private client() {
+  getClient() {
     const clientId = process.env.GOOGLE_CLIENT_ID;
     const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
     const refreshToken = process.env.YOUTUBE_REFRESH_TOKEN;
 
     if (!clientId || !clientSecret || !refreshToken) {
-      return null;
+      throw new UnauthorizedException(
+        'YouTube is not configured. Set GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET and YOUTUBE_REFRESH_TOKEN.',
+      );
     }
 
     const client = new google.auth.OAuth2(clientId, clientSecret);
@@ -17,14 +19,14 @@ export class AuthService {
     return client;
   }
 
-  async getClient() {
-    return this.client();
-  }
-
-  async status() {
+  status() {
     return {
-      connected: Boolean(this.client()),
-      mode: 'refresh_token',
+      connected: Boolean(
+        process.env.GOOGLE_CLIENT_ID &&
+        process.env.GOOGLE_CLIENT_SECRET &&
+        process.env.YOUTUBE_REFRESH_TOKEN,
+      ),
+      mode: 'server_refresh_token',
     };
   }
 }
